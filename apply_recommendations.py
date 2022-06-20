@@ -17,13 +17,22 @@
 import argparse
 import sys
 
+from datetime import datetime
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
 
 
 def get_recommendations(client, customer_id):
-  """Retrieve recommendations for a specific customer_id.
-     The recommendation type will be replaced once pMax is launched.
+  """Retrieves recommendations for a specific customer_id.
+
+  The recommendation type will be replaced once pMax is launched.
+
+  Args:
+    client: A Google Ads API Client.
+    customer_id: The external customer ID for the account.
+
+  Returns:
+    recommendations: A list with recommendation IDs for the account.
   """
 
   ga_service = client.get_service("GoogleAdsService")
@@ -34,7 +43,7 @@ def get_recommendations(client, customer_id):
       recommendation.campaign,
       recommendation.resource_name
     FROM recommendation
-    WHERE recommendation.type = KEYWORD
+    WHERE recommendation.type = 'UPGRADE_SMART_SHOPPING_CAMPAIGN_TO_PERFORMANCE_MAX'
     {campaign_filter}
     """
 
@@ -50,65 +59,111 @@ def get_recommendations(client, customer_id):
   return recommendations
 
 
-def apply_recommendation(client, customer_id, resource_name):
+def apply_recommendations(client, customer_id, recommendations):
+  """Applies a list of recommendations for a customer_id.
+
+  Args:
+    client: A Google Ads API Client.
+    customer_id: The external customer ID for the account.
+    recommendations: a list with recommendation resources.
+
+  Returns:
+    recommendations_response: API response message with results[] and errors.
+  """
+  recommendation_operations = []
   recommendation_service = client.get_service("RecommendationService")
-  apply_recommendation_operation = client.get_type(
-      "ApplyRecommendationOperation")
-  apply_recommendation_operation.resource_name = resource_name
-  recommendation_response = recommendation_service.apply_recommendation(
-      customer_id=customer_id, operations=[apply_recommendation_operation])
-  return recommendation_response
+  for recommendation in recommendations:
+    apply_recommendation_operation = client.get_type(
+        "ApplyRecommendationOperation")
+    apply_recommendation_operation.resource_name = recommendation
+    recommendation_operations.append(apply_recommendation_operation)
+  recommendations_response = recommendation_service.apply_recommendation(
+      customer_id=customer_id, operations=recommendation_operations)
+  return recommendations_response
 
 
-def main(client, customer_id):
-  recommendations = get_recommendations(client, customer_id)
-  print("Total Recommendations available for CID {customer_id}: ",
-        len(recommendations))
-  confirmation = input(f"Apply all recommendations for CID {customer_id}? (y/n)"
-                      ).lower().strip()
+def main(client, customer_ids, safe_mode):
+  """Gets all recommendations for each CID and applies them w or w/o a prompt.
+
+  Args:
+    client: A Google Ads API Client.
+    customer_ids: a list of customer ids.
+    safe_mode: boolean, if to be prompted before applying recommendations.
+  """
+  all_recommendations = {}
+  for customer_id in customer_ids:
+    googleads_client.login_customer_id = customer_id
+    all_recommendations[customer_id] = []
+    try:
+      recommendations = get_recommendations(client, customer_id)
+      all_recommendations[customer_id] = recommendations
+    except GoogleAdsException as x:
+      print(f'Request with ID "{x.request_id}" failed with status '
+            f'"{x.error.code().name}" and includes the following errors:')
+      for e in x.failure.errors:
+        print(f'\tError with message "{e.message}".')
+        if e.location:
+          for element in e.location.field_path_elements:
+            print(f"\t\tOn field: {element.field_name}")
+
+  print("Total Recommendations found per CID:")
+  for customer_id in all_recommendations:
+    print(
+        f"{customer_id}: {len(all_recommendations[customer_id])} recommendations"
+    )
+
+  if safe_mode:
+    confirmation = input("Apply all recommendations? (y/n)").lower().strip()
+  else:
+    confirmation = "y"
+
   while confirmation not in ("y", "n"):
     confirmation = input("Invalid answer. Please confirm with 'y' or 'n'.")
   if confirmation == "n":
-    sys.exit("Exiting, no recommndations applied.")
+    sys.exit("No recommndations applied.")
   elif confirmation == "y":
-    for recommendation in recommendations:
-      response = apply_recommendation(client, customer_id, recommendation)
-      print(f"Recommendation applied")
+    campaign_ids = open("")
+    for customer_id in all_recommendations:
+      if not all_recommendations[customer_id]:
+        print(f"CID: {customer_id}: 0 recommendations available, 0 applied. ")
+      else:
+        response = apply_recommendations(client, customer_id,
+                                         all_recommendations[customer_id])
+        print(
+            f"CID: {customer_id} - total recommendations applied:{len(all_recommendations[customer_id])}"
+        )
+        campaign_ids.write(customer_id + "\n")
+        campaign_ids.write(response + "\n")
+    campaign_ids.close()
 
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(
-      description="Lists TEXT_AD recommendations for specified customer.")
+      description="Gets and applies pmax recommendations for list of CIDs")
   # The following argument(s) should be provided to run the example.
   parser.add_argument(
       "-c",
       "--customer_id",
       type=str,
       required=False,
-      help="The Google Ads customer ID.",
+      help="The Google Ads customer ID. (without dashes)",
   )
   parser.add_argument(
       "-p",
       "--path_config",
       type=str,
       required=True,
-      help="The full path for the google-ads.yaml configuration file.")
+      help="The path for the google-ads.yaml configuration file.")
+  parser.add_argument(
+      "-s",
+      "--safe_mode_off",
+      action="store_false",
+      help="Ask for confirmation before applying Recommendation for each CID.")
 
   # GoogleAdsClient will read the google-ads.yaml configuration file in the
   # home directory if none is specified.
   args = parser.parse_args()
   googleads_client = GoogleAdsClient.load_from_storage(
-      version="v10", path=args.path_config)
-
-  for account in args.customer_id.replace(" ", "").split(","):
-    try:
-      googleads_client.login_customer_id = account
-      main(googleads_client, account)
-    except GoogleAdsException as ex:
-      print(f'Request with ID "{ex.request_id}" failed with status '
-            f'"{ex.error.code().name}" and includes the following errors:')
-      for error in ex.failure.errors:
-        print(f'\tError with message "{error.message}".')
-        if error.location:
-          for field_path_element in error.location.field_path_elements:
-            print(f"\t\tOn field: {field_path_element.field_name}")
+      version="v11", path=args.path_config)
+  accounts = args.customer_id.replace(" ", "").split(",")
+  main(googleads_client, accounts, args.safe_mode)
