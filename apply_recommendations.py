@@ -82,17 +82,18 @@ def apply_recommendations(client, customer_id, recommendations):
   return recommendations_response
 
 
-def main(client, customer_ids, safe_mode):
+def main(client, customer_ids, override_safe):
   """Gets all recommendations for each CID and applies them w or w/o a prompt.
 
   Args:
     client: A Google Ads API Client.
     customer_ids: a list of customer ids.
-    safe_mode: boolean, if to be prompted before applying recommendations.
+    override_safe: receive no prompt for confirmation and apply directly.
   """
   all_recommendations = {}
   for customer_id in customer_ids:
-    googleads_client.login_customer_id = customer_id
+    # Uncomment below to log in directly on each account, vs at manager level.
+    # googleads_client.login_customer_id = customer_id
     all_recommendations[customer_id] = []
     try:
       recommendations = get_recommendations(client, customer_id)
@@ -107,22 +108,25 @@ def main(client, customer_ids, safe_mode):
             print(f"\t\tOn field: {element.field_name}")
 
   print("Total Recommendations found per CID:")
+  total_recommendations = 0
   for customer_id in all_recommendations:
+    total_recommendations += len(all_recommendations[customer_id])
     print(
         f"{customer_id}: {len(all_recommendations[customer_id])} recommendations"
     )
-
-  if safe_mode:
-    confirmation = input("Apply all recommendations? (y/n)").lower().strip()
-  else:
+  if total_recommendations == 0:
+    print("No recommendations found, terminating.")
+    return
+  if override_safe:
     confirmation = "y"
+  else:
+    confirmation = input("Apply all recommendations? (y/n)").lower().strip()
 
   while confirmation not in ("y", "n"):
     confirmation = input("Invalid answer. Please confirm with 'y' or 'n'.")
   if confirmation == "n":
     sys.exit("No recommndations applied.")
   elif confirmation == "y":
-    campaign_ids = open("")
     for customer_id in all_recommendations:
       if not all_recommendations[customer_id]:
         print(f"CID: {customer_id}: 0 recommendations available, 0 applied. ")
@@ -132,9 +136,9 @@ def main(client, customer_ids, safe_mode):
         print(
             f"CID: {customer_id} - total recommendations applied:{len(all_recommendations[customer_id])}"
         )
-        campaign_ids.write(customer_id + "\n")
-        campaign_ids.write(response + "\n")
-    campaign_ids.close()
+        with open("campaign_ids.txt", "a") as campaign_ids:
+          campaign_ids.write(customer_id + "\n")
+          campaign_ids.write(str(response) + "\n")
 
 
 if __name__ == "__main__":
@@ -155,10 +159,10 @@ if __name__ == "__main__":
       required=True,
       help="The path for the google-ads.yaml configuration file.")
   parser.add_argument(
-      "-s",
-      "--safe_mode_off",
-      action="store_false",
-      help="Ask for confirmation before applying Recommendation for each CID.")
+      "-o",
+      "--override_safe",
+      action="store_true",
+      help="No prompt before applying Recommendation for each CID.")
 
   # GoogleAdsClient will read the google-ads.yaml configuration file in the
   # home directory if none is specified.
@@ -166,4 +170,4 @@ if __name__ == "__main__":
   googleads_client = GoogleAdsClient.load_from_storage(
       version="v11", path=args.path_config)
   accounts = args.customer_id.replace(" ", "").split(",")
-  main(googleads_client, accounts, args.safe_mode)
+  main(googleads_client, accounts, args.override_safe)
