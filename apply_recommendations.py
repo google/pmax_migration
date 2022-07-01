@@ -15,9 +15,8 @@
 """This script gets all recommendations for a list of CIDs and applies them."""
 
 import argparse
-import sys
+import datetime
 
-from datetime import datetime
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
 
@@ -125,7 +124,8 @@ def main(client, customer_ids, override_safe):
   while confirmation not in ("y", "n"):
     confirmation = input("Invalid answer. Please confirm with 'y' or 'n'.")
   if confirmation == "n":
-    sys.exit("No recommndations applied.")
+    print("No recommndations applied.")
+    return
   elif confirmation == "y":
     for customer_id in all_recommendations:
       if not all_recommendations[customer_id]:
@@ -136,7 +136,8 @@ def main(client, customer_ids, override_safe):
         print(
             f"CID: {customer_id} - total recommendations applied:{len(all_recommendations[customer_id])}"
         )
-        with open("campaign_ids.txt", "a") as campaign_ids:
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%I%M%S%p")
+        with open(f"campaign_ids_{timestamp}.txt", "a") as campaign_ids:
           campaign_ids.write(customer_id + "\n")
           campaign_ids.write(str(response) + "\n")
 

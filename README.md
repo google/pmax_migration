@@ -29,7 +29,7 @@ issue.
 For ex:
 
 ```
-python apply_recommendations.py --customer_id=111111,22222,33333 --yaml_path=/path/to/file 
+python apply_recommendations.py --customer_id=111111,22222,33333 --yaml_path=/path/to/file
 ```
 
 ## Requirements
@@ -66,11 +66,10 @@ The script may execute in two ways:
 # googleads_client.login_customer_id = customer_id
 ```
 
-Since the first
-option is more common for this type of usage, the script has it by default. If
-you want to The Script executes on CID level, so the user should have admin
-rights to all CIDs provided in the list. If one of the accounts returns an
-'unauthorized' error, the others will still execute.
+Since the first option is more common for this type of usage, the script has it
+by default. If you want to The Script executes on CID level, so the user should
+have admin rights to all CIDs provided in the list. If one of the accounts
+returns an 'unauthorized' error, the others will still execute.
 
 ## Flags
 
@@ -96,3 +95,21 @@ By default, you'll receive a prompt to confirm the upgrade. You can switch this
 off and execute without receiving a prompt
 
 `ex: python apply_recommendations.py -c 11111 -y /path/to/yaml --override_safe`
+
+## Disclaimer
+
+**This is not an officially supported Google product.**
+
+Copyright 2022 Google LLC. This solution, including any related sample code or
+data, is made available on an “as is,” “as available,” and “with all faults”
+basis, solely for illustrative purposes, and without warranty or representation
+of any kind. This solution is experimental, unsupported and provided solely for
+your convenience. Your use of it is subject to your agreements with Google, as
+applicable, and may constitute a beta feature as defined under those agreements.
+To the extent that you make any data available to Google in connection with your
+use of the solution, you represent and warrant that you have all necessary and
+appropriate rights, consents and permissions to permit Google to use and process
+that data. By using any portion of this solution, you acknowledge, assume and
+accept all risks, known and unknown, associated with its usage, including with
+respect to your deployment of any portion of this solution in your systems, or
+usage in connection with your business, if at all.
