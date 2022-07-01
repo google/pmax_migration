@@ -12,21 +12,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This script queries the performance max migration status for a list of CIDs
- and returns the new performance max campaign reference if available."""
+"""This script queries the performance max migration status for a list of CIDs.
+
+It returns status and the new performance max campaign reference if available.
+"""
 import argparse
-import sys
 from datetime import datetime
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
 
 def get_status(client, customer_id):
-  """Retrieves performance max status for a specific customer_id and prints
-   out the details in the csv format customer id, ssc campaign, status, pmax campaign
+  """Retrieves performance max status for a specific customer_id.
+
+  It prints out the details in the csv format customer id, ssc campaign, status,
+  pmax campaign.
 
   Args:
     client: A Google Ads API Client.
     customer_id: The external customer ID for the account.
+  Returns:
+    statuses: a list with all campaigns infos as strings.
   """
   ga_service = client.get_service("GoogleAdsService")
 
@@ -52,8 +57,13 @@ def get_status(client, customer_id):
         statuses.append(status_string)
   return statuses
 
+
 def main(client, customer_ids):
-  """Gets all migration statuses for each CID and applies them w or w/o a prompt.
+  """Gets all migration statuses for each CID and applies them.
+
+  With the usage of flags, user can choose to be prompted before applying, or
+  not.
+
   Args:
     client: A Google Ads API Client.
     customer_ids: a list of customer ids.
@@ -100,5 +110,5 @@ if __name__ == "__main__":
   googleads_client = GoogleAdsClient.load_from_storage(
       version="v11", path=args.path_config)
   accounts = args.customer_id.replace(" ", "").split(",")
- 
+
   main(googleads_client, accounts)
