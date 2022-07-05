@@ -17,7 +17,6 @@
 It returns status and the new performance max campaign reference if available.
 """
 import argparse
-from datetime import datetime
 from google.ads.googleads.client import GoogleAdsClient
 from google.ads.googleads.errors import GoogleAdsException
 
@@ -35,11 +34,10 @@ def get_status(client, customer_id):
   """
   ga_service = client.get_service("GoogleAdsService")
 
-  query = f"""
+  query = """
     SELECT campaign.performance_max_upgrade.status,
      campaign.performance_max_upgrade.pre_upgrade_campaign,
-     campaign.performance_max_upgrade.performance_max_campaign,
-     campaign.name
+     campaign.performance_max_upgrade.performance_max_campaign
      FROM campaign
      WHERE campaign.advertising_channel_sub_type = 'SHOPPING_SMART_ADS'
      """
@@ -52,9 +50,8 @@ def get_status(client, customer_id):
   for batch in stream:
     for row in batch.results:
       campaign = row.campaign
-      if campaign.performance_max_upgrade.pre_upgrade_campaign:
-        status_string = f"{customer_id}, {campaign.performance_max_upgrade.pre_upgrade_campaign},{campaign.performance_max_upgrade.status}, {campaign.performance_max_upgrade.performance_max_campaign}"
-        statuses.append(status_string)
+      status_string = f"{customer_id}, {campaign.resource_name},{campaign.performance_max_upgrade.status}, {campaign.performance_max_upgrade.performance_max_campaign}"
+      statuses.append(status_string)
   return statuses
 
 
