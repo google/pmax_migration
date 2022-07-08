@@ -29,7 +29,7 @@ issue.
 For ex:
 
 ```
-python apply_recommendations.py --customer_id=111111,22222,33333 --yaml_path=/path/to/file
+python apply_recommendations.py --customer_id=111111,22222,33333 --path_config=/path/to/file
 ```
 
 ## Requirements
@@ -44,7 +44,7 @@ The user must provide credentials consisting of:
 
 These should be passed in the yaml configuration file. If necessary, you can
 have multiple yaml files. Each execution will use only 1 file, and you can
-specify which file with the flag yaml_path.
+specify which file with the flag path_config.
 
 **Google Ads API Client**
 
@@ -81,35 +81,21 @@ space will work, as below.
 
 `ex: --customer_id=11111,22222,33333 or -c 1111,22222`
 
-**--yaml_path or -y**
+**--path_config or -p**
 
 If no yaml file path is passed, the tool will look for one in the home directory
 (~/). Passing the yaml file path can be helpful if calling the script
 programmatically over multiple sets of credentials, if necessary.
 
-`ex: --yaml_path=/path/to/your/yaml or -y /path/to/yaml`
+`ex: --path_config=/path/to/your/yaml or -p /path/to/yaml`
 
 **--override_safe or -o**
 
 By default, you'll receive a prompt to confirm the upgrade. You can switch this
 off and execute without receiving a prompt
 
-`ex: python apply_recommendations.py -c 11111 -y /path/to/yaml --override_safe`
+`ex: python apply_recommendations.py -c 11111 -p /path/to/yaml --override_safe`
 
 ## Disclaimer
 
 **This is not an officially supported Google product.**
-
-Copyright 2022 Google LLC. This solution, including any related sample code or
-data, is made available on an “as is,” “as available,” and “with all faults”
-basis, solely for illustrative purposes, and without warranty or representation
-of any kind. This solution is experimental, unsupported and provided solely for
-your convenience. Your use of it is subject to your agreements with Google, as
-applicable, and may constitute a beta feature as defined under those agreements.
-To the extent that you make any data available to Google in connection with your
-use of the solution, you represent and warrant that you have all necessary and
-appropriate rights, consents and permissions to permit Google to use and process
-that data. By using any portion of this solution, you acknowledge, assume and
-accept all risks, known and unknown, associated with its usage, including with
-respect to your deployment of any portion of this solution in your systems, or
-usage in connection with your business, if at all.
