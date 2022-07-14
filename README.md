@@ -96,6 +96,4 @@ off and execute without receiving a prompt
 
 `ex: python apply_recommendations.py -c 11111 -p /path/to/yaml --override_safe`
 
-## Disclaimer
-
 **This is not an officially supported Google product.**
